@@ -1,0 +1,46 @@
+POLÍTICA DE PRIVACIDADE – PORTAL AXIS CONECTA LTDA, CNPJ: 12.345.768/0001-99.
+
+1. INTRODUÇÃO
+Esta Política de Privacidade tem por finalidade informar como o PORTAL AXIS CONECTA LTDA. (“Plataforma”) realiza o tratamento de dados pessoais de Usuários e Profissionais, em conformidade com a Lei nº 13.709/2018 – Lei Geral de Proteção de Dados (LGPD).
+
+2. COLETA DE DADOS
+Podemos coletar os seguintes dados pessoais:
+a) Nome completo, CPF, e-mail e telefone;
+b) Dados de localização e IP;
+c) Informações profissionais dos terapeutas cadastrados;
+d) Histórico de navegação e uso da Plataforma.
+
+3. FINALIDADE DO TRATAMENTO
+Os dados são coletados com as seguintes finalidades:
+a) Permitir a intermediação entre pacientes e terapeutas;
+b) Viabilizar comunicações e notificações;
+c) Cumprir obrigações legais e regulatórias;
+d) Garantir segurança, prevenção a fraudes e manutenção da integridade da Plataforma.
+
+4. COMPARTILHAMENTO
+O PORTAL AXIS CONECTA não comercializa dados pessoais. O compartilhamento poderá ocorrer apenas:
+a) com autoridades públicas, mediante requisição legal;
+b) com prestadores de serviços que auxiliem na operação da Plataforma, sob cláusulas de confidencialidade;
+c) mediante consentimento do titular, quando aplicável.
+
+5. DIREITOS DO TITULAR
+Nos termos da LGPD, o Usuário pode requerer, a qualquer momento:
+a) acesso aos seus dados;
+b) correção de dados incorretos ou desatualizados;
+c) exclusão de dados desnecessários;
+d) portabilidade;
+e) revogação do consentimento.
+
+6. ARMAZENAMENTO E SEGURANÇA
+Os dados são armazenados em ambiente seguro, observando medidas técnicas e administrativas adequadas para proteção contra acessos não autorizados, perda ou alteração indevida.
+
+7. PRAZO DE RETENÇÃO
+Os dados serão mantidos apenas pelo tempo necessário para cumprimento das finalidades aqui descritas ou conforme exigido por lei.
+
+8. ALTERAÇÕES DESTA POLÍTICA
+Esta Política poderá ser atualizada a qualquer tempo, sendo recomendada a consulta periódica. Alterações substanciais serão comunicadas aos Usuários por meio eletrônico.
+
+9. LEGISLAÇÃO E FORO
+Esta Política é regida pelas leis brasileiras. Para dirimir eventuais controvérsias, fica eleito o Foro da Comarca do Rio de Janeiro – RJ.
+
+Dúvidas, solicitações ou sugestões, devem ser encaminhasdas para o e-mail: contato@portalaxis.com.br

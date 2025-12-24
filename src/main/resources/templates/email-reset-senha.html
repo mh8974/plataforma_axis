@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXIS - Redefinição de Senha</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333333;
+        }
+        .message {
+            font-size: 16px;
+            margin-bottom: 30px;
+            color: #555555;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .reset-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .reset-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+        .alert-box {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .alert-box p {
+            margin: 0;
+            font-size: 14px;
+            color: #856404;
+        }
+        .info-box {
+            background-color: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-box p {
+            margin: 0;
+            font-size: 14px;
+            color: #014361;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #777777;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 30px 0;
+        }
+        .security-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>AXIS</h1>
+            <p style="margin: 10px 0 0 0; font-size: 14px;">Plataforma de Terapia</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+
+            <div class="greeting">
+                Olá, <strong th:text="${nomeUsuario}">Usuário</strong>!
+            </div>
+
+            <div class="message">
+                Recebemos uma solicitação para redefinir a senha da sua conta na plataforma AXIS.
+                Se você não fez essa solicitação, ignore este email e sua senha permanecerá inalterada.
+            </div>
+
+            <div class="message">
+                Para redefinir sua senha, clique no botão abaixo:
+            </div>
+
+            <div class="button-container">
+                <a th:href="${urlReset}" class="reset-button">Redefinir Senha</a>
+            </div>
+
+            <div class="alert-box">
+                <p>
+                    ⚠️ <strong>Importante:</strong> Por motivos de segurança, este link irá expirar em
+                    <strong th:text="${validadeMinutos}">15</strong> minutos.
+                </p>
+            </div>
+
+            <div class="info-box">
+                <p>
+                    💡 <strong>Dica de segurança:</strong>
+                    Nunca compartilhe este link com outras pessoas.
+                    Ele é de uso único e pessoal.
+                </p>
+            </div>
+
+            <div class="divider"></div>
+
+            <div style="font-size: 13px; color: #777777;">
+                <p><strong>Se o botão não funcionar, copie e cole o link abaixo no seu navegador:</strong></p>
+                <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace;">
+                    <a th:href="${urlReset}" th:text="${urlReset}" style="color: #667eea;">Link de reset</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>AXIS - Plataforma de Terapia</strong></p>
+            <p>Este é um email automático, por favor não responda.</p>
+            <p>
+                Se você tiver dúvidas, entre em contato conosco em
+                <a href="mailto:suporte@portalaxis.com.br">suporte@portalaxis.com.br</a>
+            </p>
+            <p style="margin-top: 15px;">
+                <a href="https://portalaxis.com.br">Visitar AXIS</a> |
+                <a href="https://portalaxis.com.br/termos">Termos de Uso</a> |
+                <a href="https://portalaxis.com.br/privacidade">Privacidade</a>
+            </p>
+            <p style="margin-top: 10px; font-size: 11px; color: #999999;">
+                &copy; 2025 ÁXIS. Todos os direitos reservados.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

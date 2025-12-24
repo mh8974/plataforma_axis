@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXIS - Cadastro Não Aprovado</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333333;
+        }
+        .message {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: #555555;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .action-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+        .warning-box {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .warning-box p {
+            margin: 0;
+            font-size: 14px;
+            color: #92400e;
+        }
+        .motivo-box {
+            background-color: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .motivo-box h4 {
+            margin: 0 0 10px 0;
+            color: #991b1b;
+            font-size: 14px;
+        }
+        .motivo-box p {
+            margin: 0;
+            font-size: 14px;
+            color: #7f1d1d;
+            white-space: pre-line;
+        }
+        .info-box {
+            background-color: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-box p {
+            margin: 0;
+            font-size: 14px;
+            color: #014361;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #777777;
+            border-top: 1px solid #e0e0e0;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 30px 0;
+        }
+        .info-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>AXIS</h1>
+            <p style="margin: 10px 0 0 0; font-size: 14px;">Plataforma de Terapia</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+
+            <div class="greeting">
+                Olá, <strong th:text="${nomeTerapeuta}">Terapeuta</strong>!
+            </div>
+
+            <div class="message">
+                Agradecemos seu interesse em fazer parte da plataforma AXIS.
+                Após análise cuidadosa do seu cadastro, infelizmente não foi possível aprovar sua solicitação neste momento.
+            </div>
+
+            <div class="motivo-box">
+                <h4>&#128269; Motivo reprovação:</h4>
+                <p th:text="${motivoReprovacao}">Motivo não informado</p>
+            </div>
+
+            <div class="warning-box">
+                <p>
+                    &#9888;&#65039; <strong>Importante:</strong> Esta decisão não é definitiva. Acesse a plataforma, faça os ajustes que geraram o motivo da reprovação, e em breve faremos uma nova análise.
+                </p>
+            </div>
+
+            <div class="info-box">
+                <p>
+                    &#128161; <strong>Dúvidas?</strong> Se você acredita que houve algum equívoco na análise ou precisa de mais informações, entre em contato com nossa equipe de suporte.
+                </p>
+            </div>
+
+            <div class="button-container">
+                <a th:href="${urlSuporte}" class="action-button">Entrar em Contato</a>
+            </div>
+
+            <div class="divider"></div>
+
+            <div style="font-size: 13px; color: #777777;">
+                <p>Agradecemos sua compreensão e esperamos poder recebê-lo(a) em breve na nossa plataforma.</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>AXIS - Plataforma de Terapia</strong></p>
+            <p>Este é um email automático, por favor não responda.</p>
+            <p>
+                Se você tiver dúvidas, entre em contato conosco em
+                <a href="mailto:suporte@portalaxis.com.br">suporte@portalaxis.com.br</a>
+            </p>
+            <p style="margin-top: 15px;">
+                <a href="https://portalaxis.com.br">Visitar AXIS</a> |
+                <a href="https://portalaxis.com.br/termos">Termos de Uso</a> |
+                <a href="https://portalaxis.com.br/privacidade">Privacidade</a>
+            </p>
+            <p style="margin-top: 10px; font-size: 11px; color: #999999;">
+                &copy; 2025 ÁXIS. Todos os direitos reservados.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
