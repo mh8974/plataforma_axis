@@ -1,0 +1,810 @@
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { useForm } from 'react-hook-form';
+import { useMutation } from '@tanstack/react-query';
+import {
+  User,
+  GraduationCap,
+  Calendar,
+  MapPin,
+  Share2,
+  Heart,
+  Save,
+  X,
+  ArrowLeft
+} from 'lucide-react';
+import Layout from '@/components/layout/Layout';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Link from 'next/link';
+import apiService from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
+
+interface TerapeutaFormData {
+  // Dados Pessoais (read-only)
+  nome: string;
+  email: string;
+  dataNascimento: string;
+  genero: string;
+
+  // Dados Editáveis
+  telefone: string;
+  religiao: string;
+
+  // Dados Profissionais (read-only alguns)
+  crp: string;
+  anosExperiencia: number;
+  instituicaoFormacao: string;
+  anoFormacao: number;
+
+  // Dados Editáveis Profissionais
+  especialidades: string;
+  abordagensTerapeuticas: string[];
+  biografiaProfissional: string;
+
+  // Atendimento
+  modalidadeAtendimento: string;
+  valorSessao: number;
+  consultaGratuita: boolean;
+  diasAtendimento: string[];
+
+  // Localização (condicional)
+  cep: string;
+  cidade: string;
+  uf: string;
+  rua: string;
+  numero: string;
+  complemento: string;
+
+  // Redes Sociais
+  instagram: string;
+  linkedin: string;
+  youtube: string;
+  tiktok: string;
+
+  // Informações Pessoais Detalhadas
+  estadoCivil: string;
+  anosRelacionamento: number;
+  possuiFilhos: boolean;
+  quantidadeFilhos: number;
+  hobby: string;
+}
+
+const abordagensDisponiveis = [
+  'Cognitivo-Comportamental',
+  'Psicanálise',
+  'Humanista',
+  'Gestalt',
+  'Sistêmica',
+  'Analítica'
+];
+
+const diasSemana = [
+  'Segunda',
+  'Terça',
+  'Quarta',
+  'Quinta',
+  'Sexta',
+  'Sábado',
+  'Domingo'
+];
+
+const EditarPerfilTerapeuta: React.FC = () => {
+  const router = useRouter();
+  const [showLocationFields, setShowLocationFields] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors, isDirty }
+  } = useForm<TerapeutaFormData>();
+
+  const modalidadeAtendimento = watch('modalidadeAtendimento');
+  const possuiFilhos = watch('possuiFilhos');
+
+  // Verificar autenticação usando useAuth hook
+  useEffect(() => {
+    if (!authLoading) {
+      if (!isAuthenticated || !user || user.tipo !== 'TERAPEUTA') {
+        router.push('/login');
+        return;
+      }
+    }
+  }, [isAuthenticated, authLoading, user, router]);
+
+  // Carregar dados do terapeuta
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && user && user.tipo === 'TERAPEUTA') {
+      const loadTerapeutaData = async () => {
+
+        try {
+          // CARREGAR DADOS REAIS DO BACKEND
+          const terapeutaData = await apiService.getTerapeuta(user.id);
+
+          // Extrair localização do campo localizacaoClinica
+          // Formato: "Rua, 123, Complemento - Bairro, Cidade - UF - CEP: 00000-000"
+          const localizacao = terapeutaData.localizacaoClinica || '';
+          const cepMatch = localizacao.match(/CEP:\s*(\d{5}-?\d{3})/);
+          const ufMatch = localizacao.match(/\s-\s([A-Z]{2})\s-\sCEP/);
+          const cidadeMatch = localizacao.match(/,\s([^-]+)\s-\s[A-Z]{2}/);
+
+          let rua = '', numero = '', complemento = '';
+          const enderecoMatch = localizacao.match(/^([^,]+),\s*(\d+)(?:,\s*([^-]+))?/);
+          if (enderecoMatch) {
+            rua = enderecoMatch[1] || '';
+            numero = enderecoMatch[2] || '';
+            complemento = enderecoMatch[3]?.trim() || '';
+          }
+
+          // Mapear campos do backend para o formulário
+          const formData: TerapeutaFormData = {
+            // Dados do usuário (reais)
+            nome: user.nome || '',
+            email: user.email || '',
+
+            // Dados do terapeuta (reais quando existem)
+            telefone: String(terapeutaData.telefone || ''),
+            dataNascimento: terapeutaData.dataNascimento ? String(terapeutaData.dataNascimento) : '',
+            genero: String(terapeutaData.genero || 'Não informado'),
+            religiao: String(terapeutaData.religiao || 'CATOLICO'),
+
+            // Profissionais (reais)
+            crp: String(terapeutaData.crp || ''),
+            anosExperiencia: Number(terapeutaData.experienciaAnos || terapeutaData.anosExperiencia || 0),
+            instituicaoFormacao: String(terapeutaData.instituicaoFormacao || ''),
+            anoFormacao: Number(terapeutaData.anoFormacao || 0),
+            especialidades: String(terapeutaData.especialidades || ''),
+            abordagensTerapeuticas: (terapeutaData.abordagemTerapeutica && typeof terapeutaData.abordagemTerapeutica === 'string') ? terapeutaData.abordagemTerapeutica.split(',').map(s => s.trim()) : [],
+            biografiaProfissional: String(terapeutaData.bio || ''),
+
+            // Atendimento (reais)
+            modalidadeAtendimento: String(terapeutaData.modalidadeAtendimento || 'online'),
+            valorSessao: Number(terapeutaData.valorSessao || 100),
+            consultaGratuita: Boolean(terapeutaData.primeiraConsultaGratuita),
+            diasAtendimento: Array.isArray(terapeutaData.diasAtendimento) ? terapeutaData.diasAtendimento : [],
+
+            // Localização (extraída de localizacaoClinica)
+            cep: cepMatch ? cepMatch[1] : '',
+            cidade: cidadeMatch ? cidadeMatch[1].trim() : '',
+            uf: ufMatch ? ufMatch[1] : '',
+            rua: rua,
+            numero: numero,
+            complemento: complemento,
+
+            // Redes Sociais (do campo JSON redesSociais)
+            instagram: terapeutaData.redesSociais?.instagram || '',
+            linkedin: terapeutaData.redesSociais?.linkedin || '',
+            youtube: terapeutaData.redesSociais?.youtube || '',
+            tiktok: terapeutaData.redesSociais?.tiktok || '',
+
+            // Informações Pessoais Detalhadas (reais do banco)
+            estadoCivil: String(terapeutaData.estadoCivil || 'SOLTEIRO'),
+            anosRelacionamento: Number(terapeutaData.anosRelacionamento || 0),
+            possuiFilhos: Boolean(terapeutaData.possuiFilhos),
+            quantidadeFilhos: Number(terapeutaData.quantidadeFilhos || 0),
+            hobby: String(terapeutaData.hobby || '')
+          };
+
+          // Preencher formulário com dados reais do banco usando reset para arrays
+          reset(formData);
+
+          setIsLoading(false);
+
+        } catch (error) {
+          console.error('Erro ao carregar dados do terapeuta:', error);
+          alert('Erro ao carregar dados do perfil. Tente novamente.');
+          router.push('/terapeutas/dashboard');
+        }
+      };
+
+      loadTerapeutaData();
+    }
+  }, [authLoading, isAuthenticated, user, router, setValue]);
+
+  // Controlar exibição dos campos de localização
+  useEffect(() => {
+    setShowLocationFields(modalidadeAtendimento === 'presencial' || modalidadeAtendimento === 'hibrido');
+  }, [modalidadeAtendimento]);
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: TerapeutaFormData) => {
+      if (!user) throw new Error('Usuário não encontrado');
+
+      // Montar objeto de redes sociais
+      const redesSociais: { [key: string]: string } = {};
+      if (data.instagram) redesSociais.instagram = data.instagram;
+      if (data.linkedin) redesSociais.linkedin = data.linkedin;
+      if (data.youtube) redesSociais.youtube = data.youtube;
+      if (data.tiktok) redesSociais.tiktok = data.tiktok;
+
+      // Construir localização completa (mesmo formato que o backend espera)
+      let localizacaoClinica = '';
+      if (data.rua && data.cidade && data.uf) {
+        localizacaoClinica = `${data.rua}`;
+        if (data.numero) localizacaoClinica += `, ${data.numero}`;
+        if (data.complemento) localizacaoClinica += `, ${data.complemento}`;
+        localizacaoClinica += `, ${data.cidade} - ${data.uf}`;
+        if (data.cep) localizacaoClinica += ` - CEP: ${data.cep}`;
+      }
+
+      // SALVAR TODOS OS CAMPOS EDITÁVEIS
+      const updateData = {
+        // Campos profissionais (incluindo CRP, Instituição e Ano)
+        crp: String(data.crp || ''),
+        instituicaoFormacao: String(data.instituicaoFormacao || ''),
+        anoFormacao: data.anoFormacao ? Number(data.anoFormacao) : null,
+        especialidades: String(data.especialidades || ''),
+        bio: String(data.biografiaProfissional || ''),
+        valorSessao: Number(data.valorSessao || 100),
+        abordagemTerapeutica: Array.isArray(data.abordagensTerapeuticas) ? data.abordagensTerapeuticas.join(',') : '',
+        modalidadeAtendimento: String(data.modalidadeAtendimento || 'online'),
+        primeiraConsultaGratuita: Boolean(data.consultaGratuita),
+        diasAtendimento: Array.isArray(data.diasAtendimento) ? data.diasAtendimento : [],
+
+        // Dados pessoais editáveis
+        religiao: String(data.religiao || 'CATOLICO'),
+        estadoCivil: String(data.estadoCivil || 'SOLTEIRO'),
+        anosRelacionamento: Number(data.anosRelacionamento || 0),
+        possuiFilhos: Boolean(data.possuiFilhos),
+        quantidadeFilhos: Number(data.quantidadeFilhos || 0),
+        hobby: String(data.hobby || ''),
+
+        // Redes sociais
+        redesSociais: Object.keys(redesSociais).length > 0 ? redesSociais : null,
+
+        // Localização
+        localizacaoClinica: localizacaoClinica || null
+      };
+
+      console.log('Salvando dados completos no backend:', updateData);
+
+      return await apiService.updateTerapeuta(user.id, updateData);
+    },
+    onSuccess: () => {
+      alert('Perfil atualizado com sucesso!');
+      router.push('/terapeutas/dashboard');
+    },
+    onError: (error) => {
+      console.error('Erro ao atualizar perfil:', error);
+      alert('Erro ao atualizar perfil. Tente novamente.');
+    }
+  });
+
+  const onSubmit = (data: TerapeutaFormData) => {
+    updateMutation.mutate(data);
+  };
+
+  const handleCancel = () => {
+    if (isDirty) {
+      if (confirm('Você tem alterações não salvas. Deseja realmente cancelar?')) {
+        router.push('/terapeutas/dashboard');
+      }
+    } else {
+      router.push('/terapeutas/dashboard');
+    }
+  };
+
+  if (authLoading || isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-neutral-600">Carregando perfil...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout
+      title="Editar Perfil - Terapeuta"
+      description="Edite as informações do seu perfil profissional"
+    >
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50">
+        {/* Header */}
+        <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <div className="flex items-center justify-center space-x-4 mb-6">
+              <Link href="/dashboard/terapeuta">
+                <Button variant="outline" size="sm">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar ao Dashboard
+                </Button>
+              </Link>
+            </div>
+            <h1 className="text-3xl font-bold text-neutral-900 mb-3">
+              Editar Perfil Profissional
+            </h1>
+            <p className="text-neutral-600">
+              Mantenha suas informações profissionais sempre atualizadas
+            </p>
+          </div>
+
+          {/* Card Principal */}
+          <Card className="p-6 sm:p-8">
+            {/* Header do Perfil */}
+            <div className="flex items-center justify-between mb-8 pb-6 border-b border-neutral-200">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
+                  <User className="w-8 h-8 text-primary-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-neutral-900">{watch('nome')}</h2>
+                  <p className="text-neutral-600">CRP: {watch('crp')}</p>
+                  <p className="text-sm text-primary-600">{watch('email')}</p>
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+              {/* Seção: Dados Pessoais */}
+              <div>
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="p-2 bg-primary-100 rounded-lg">
+                    <User className="w-5 h-5 text-primary-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-neutral-900">Dados Pessoais</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Nome Completo - Read Only */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Nome Completo</label>
+                    <div className="w-full px-3 py-2 bg-neutral-100 border border-neutral-300 rounded-lg text-neutral-700">
+                      {watch('nome')}
+                    </div>
+                  </div>
+
+                  {/* Email - Read Only */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
+                    <div className="w-full px-3 py-2 bg-neutral-100 border border-neutral-300 rounded-lg text-neutral-700">
+                      {watch('email')}
+                    </div>
+                  </div>
+
+                  {/* Telefone - Editável */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Telefone *</label>
+                    <Input
+                      type="tel"
+                      {...register('telefone', { required: 'Telefone é obrigatório' })}
+                      error={errors.telefone?.message}
+                    />
+                  </div>
+
+                  {/* Data de Nascimento - Read Only */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Data de Nascimento</label>
+                    <div className="w-full px-3 py-2 bg-neutral-100 border border-neutral-300 rounded-lg text-neutral-700">
+                      {watch('dataNascimento') && watch('dataNascimento') !== '' ?
+                        new Date(watch('dataNascimento')).toLocaleDateString('pt-BR') :
+                        'Não informado'
+                      }
+                    </div>
+                  </div>
+
+                  {/* Gênero - Read Only */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Identidade de Gênero</label>
+                    <div className="w-full px-3 py-2 bg-neutral-100 border border-neutral-300 rounded-lg text-neutral-700">
+                      {watch('genero')}
+                    </div>
+                  </div>
+
+                  {/* Religião - Editável */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Religião</label>
+                    <select
+                      {...register('religiao')}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                    >
+                      <option value="CATOLICO">Católico</option>
+                      <option value="PROTESTANTE">Protestante</option>
+                      <option value="ESPIRITA">Espírita</option>
+                      <option value="BUDISTA">Budista</option>
+                      <option value="ATEU">Ateu</option>
+                      <option value="AGNOSTICO">Agnóstico</option>
+                      <option value="OUTRO">Outro</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção: Dados Profissionais */}
+              <div>
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="p-2 bg-primary-100 rounded-lg">
+                    <GraduationCap className="w-5 h-5 text-primary-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-neutral-900">Dados Profissionais</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* CRP - Editável */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">CRP/CRM (opcional)</label>
+                    <Input
+                      type="text"
+                      placeholder="Ex: 06/123456"
+                      {...register('crp')}
+                    />
+                  </div>
+
+                  {/* Anos de Experiência - Read Only */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Anos de Experiência</label>
+                    <div className="w-full px-3 py-2 bg-neutral-100 border border-neutral-300 rounded-lg text-neutral-700">
+                      {watch('anosExperiencia')} anos
+                    </div>
+                  </div>
+
+                  {/* Instituição de Formação - Editável */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Instituição de Formação (opcional)</label>
+                    <Input
+                      type="text"
+                      placeholder="Ex: USP, PUC, etc"
+                      {...register('instituicaoFormacao')}
+                    />
+                  </div>
+
+                  {/* Ano de Formação - Editável */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Ano de Formação (opcional)</label>
+                    <Input
+                      type="number"
+                      min="1950"
+                      max={new Date().getFullYear()}
+                      placeholder="Ex: 2015"
+                      {...register('anoFormacao')}
+                    />
+                  </div>
+
+                  {/* Especialidades - Editável */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Especialidades *</label>
+                    <Input
+                      type="text"
+                      placeholder="Separe por vírgulas"
+                      {...register('especialidades', { required: 'Especialidades são obrigatórias' })}
+                      error={errors.especialidades?.message}
+                    />
+                  </div>
+
+                  {/* Abordagens Terapêuticas - Editável */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Abordagens Terapêuticas *</label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {abordagensDisponiveis.map((abordagem) => (
+                        <label key={abordagem} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            value={abordagem}
+                            {...register('abordagensTerapeuticas')}
+                            className="mr-2 text-primary-600"
+                          />
+                          <span className="text-sm">{abordagem}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Biografia Profissional - Editável */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Biografia Profissional *</label>
+                    <textarea
+                      rows={4}
+                      placeholder="Conte um pouco sobre sua experiência profissional..."
+                      {...register('biografiaProfissional', { required: 'Biografia é obrigatória' })}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                    />
+                    {errors.biografiaProfissional && (
+                      <p className="mt-1 text-sm text-red-600">{errors.biografiaProfissional.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção: Atendimento */}
+              <div>
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="p-2 bg-primary-100 rounded-lg">
+                    <Calendar className="w-5 h-5 text-primary-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-neutral-900">Atendimento</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Modalidade de Atendimento */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Modalidade de Atendimento *</label>
+                    <select
+                      {...register('modalidadeAtendimento', { required: 'Modalidade é obrigatória' })}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                    >
+                      <option value="">Selecione a modalidade</option>
+                      <option value="online">Online</option>
+                      <option value="presencial">Presencial</option>
+                      <option value="hibrido">Híbrido</option>
+                    </select>
+                    {errors.modalidadeAtendimento && (
+                      <p className="mt-1 text-sm text-red-600">{errors.modalidadeAtendimento.message}</p>
+                    )}
+                  </div>
+
+                  {/* Valor da Sessão */}
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Valor da Sessão (R$) *</label>
+                    <Input
+                      type="number"
+                      min="50"
+                      max="1000"
+                      step="10"
+                      {...register('valorSessao', {
+                        required: 'Valor da sessão é obrigatório',
+                        min: { value: 50, message: 'Valor mínimo é R$ 50' },
+                        max: { value: 1000, message: 'Valor máximo é R$ 1000' }
+                      })}
+                      error={errors.valorSessao?.message}
+                    />
+                  </div>
+
+                  {/* Consulta Gratuita */}
+                  <div className="md:col-span-2">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        {...register('consultaGratuita')}
+                        className="mr-3 text-primary-600"
+                      />
+                      <span className="text-sm font-medium text-neutral-700">Ofereço consulta gratuita</span>
+                    </label>
+                  </div>
+
+                  {/* Dias de Atendimento */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Dias de Atendimento *</label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {diasSemana.map((dia) => (
+                        <label key={dia} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            value={dia}
+                            {...register('diasAtendimento')}
+                            className="mr-2 text-primary-600"
+                          />
+                          <span className="text-sm">{dia}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção: Localização (Condicional) */}
+              {showLocationFields && (
+                <div>
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className="p-2 bg-primary-100 rounded-lg">
+                      <MapPin className="w-5 h-5 text-primary-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-neutral-900">Localização</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">CEP *</label>
+                      <Input
+                        type="text"
+                        placeholder="00000-000"
+                        {...register('cep', showLocationFields ? { required: 'CEP é obrigatório' } : {})}
+                        error={errors.cep?.message}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">Cidade *</label>
+                      <Input
+                        type="text"
+                        {...register('cidade', showLocationFields ? { required: 'Cidade é obrigatória' } : {})}
+                        error={errors.cidade?.message}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">UF *</label>
+                      <Input
+                        type="text"
+                        maxLength={2}
+                        {...register('uf', showLocationFields ? { required: 'UF é obrigatório' } : {})}
+                        error={errors.uf?.message}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">Rua *</label>
+                      <Input
+                        type="text"
+                        {...register('rua', showLocationFields ? { required: 'Rua é obrigatória' } : {})}
+                        error={errors.rua?.message}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">Número</label>
+                      <Input type="text" {...register('numero')} />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">Complemento</label>
+                      <Input
+                        type="text"
+                        placeholder="Apartamento, bloco, etc."
+                        {...register('complemento')}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Seção: Redes Sociais */}
+              <div>
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="p-2 bg-primary-100 rounded-lg">
+                    <Share2 className="w-5 h-5 text-primary-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-neutral-900">Redes Sociais</h3>
+                  <span className="text-sm text-neutral-500">(Opcional)</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Instagram</label>
+                    <Input
+                      type="text"
+                      placeholder="@usuario"
+                      {...register('instagram')}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">LinkedIn</label>
+                    <Input
+                      type="text"
+                      placeholder="linkedin.com/in/usuario"
+                      {...register('linkedin')}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">YouTube</label>
+                    <Input
+                      type="text"
+                      placeholder="youtube.com/c/usuario"
+                      {...register('youtube')}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">TikTok</label>
+                    <Input
+                      type="text"
+                      placeholder="@usuario"
+                      {...register('tiktok')}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção: Informações Adicionais */}
+              <div>
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="p-2 bg-primary-100 rounded-lg">
+                    <Heart className="w-5 h-5 text-primary-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-neutral-900">Informações Pessoais Detalhadas</h3>
+                  <span className="text-sm text-neutral-500">(Usado para matching)</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Estado Civil</label>
+                    <select
+                      {...register('estadoCivil')}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                    >
+                      <option value="SOLTEIRO">Solteiro(a)</option>
+                      <option value="CASADO">Casado(a)</option>
+                      <option value="DIVORCIADO">Divorciado(a)</option>
+                      <option value="VIUVO">Viúvo(a)</option>
+                      <option value="UNIAO_ESTAVEL">União Estável</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Anos de Relacionamento</label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="70"
+                      {...register('anosRelacionamento')}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="flex items-center mb-4">
+                      <input
+                        type="checkbox"
+                        {...register('possuiFilhos')}
+                        className="mr-3 text-primary-600"
+                      />
+                      <span className="text-sm font-medium text-neutral-700">Tenho filho(s)</span>
+                    </label>
+
+                    {possuiFilhos && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 mb-2">Quantidade de Filhos</label>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="15"
+                            {...register('quantidadeFilhos')}
+                          />
+                        </div>
+
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Hobbies e interesses pessoais</label>
+                    <textarea
+                      rows={2}
+                      placeholder="Conte sobre seus hobbies..."
+                      {...register('hobby')}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Botões de Ação */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-neutral-200">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  className="flex-1"
+                  disabled={updateMutation.isPending}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancelar Alterações
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={updateMutation.isPending}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {updateMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+export default EditarPerfilTerapeuta;
